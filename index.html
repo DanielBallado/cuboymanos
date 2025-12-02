@@ -5,613 +5,408 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>AR Hand Controller 3D - Casa 3D</title>
+    <title>AR Hand Controller 3D - Cubo Universal</title>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
-            background-color: #1e1e1e;
+            background: #1e1e1e;
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
             overflow: hidden;
             width: 100vw;
             height: 100vh;
             position: fixed;
             touch-action: none;
         }
-
         .container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             background: #000;
-            overflow: hidden;
         }
-
-        #input_video {
-            display: none;
-        }
-
-        #webgl_canvas {
+        #input_video { display: none; }
+        #webgl_canvas, #hand_canvas {
             position: absolute;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             transform: scaleX(-1);
-            z-index: 2;
         }
-
-        #hand_canvas {
+        #webgl_canvas { z-index: 2; }
+        #hand_canvas { z-index: 3; }
+        
+        .ui {
             position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            transform: scaleX(-1);
-            z-index: 3;
-        }
-
-        .instructions {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
             padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0,0,0,0.85);
             border-radius: 6px;
-            color: #ccc;
+            z-index: 10;
             font-size: 11px;
-            z-index: 10;
-            text-align: center;
-            max-width: 95%;
-            line-height: 1.3;
-        }
-
-        .gesture-info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 8px 10px;
-            background: rgba(0, 0, 0, 0.9);
-            border-radius: 6px;
-            z-index: 10;
-            font-size: 10px;
             line-height: 1.4;
-            max-width: 60%;
         }
-
-        .gesture-info h3 {
-            margin: 0 0 5px 0;
-            color: #4CAF50;
-            font-size: 12px;
-        }
-
-        .gesture-item {
-            margin: 3px 0;
-            padding-left: 5px;
-            font-size: 9px;
-        }
-
+        #info { top: 10px; left: 10px; max-width: 200px; }
+        #info h3 { color: #4CAF50; font-size: 13px; margin: 0 0 5px 0; }
+        .gi { margin: 3px 0; padding-left: 5px; }
+        #status { top: 10px; right: 10px; }
+        .hs { display: flex; align-items: center; gap: 5px; margin: 2px 0; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; flex-shrink: 0; }
+        .dot.active { background: #4CAF50; box-shadow: 0 0 8px #4CAF50; }
+        #inst { bottom: 10px; left: 50%; transform: translateX(-50%); text-align: center; max-width: 90%; }
+        
         #loadingMsg {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 100;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0,0,0,0.95);
             padding: 20px;
             border-radius: 8px;
-            font-size: 13px;
             text-align: center;
             max-width: 80%;
         }
-
-        .status-indicator {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 6px 10px;
-            background: rgba(0, 0, 0, 0.9);
-            border-radius: 6px;
-            z-index: 10;
-            font-size: 9px;
-        }
-
-        .hand-status {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin: 2px 0;
-        }
-
-        .indicator-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #555;
-            flex-shrink: 0;
-        }
-
-        .indicator-dot.active {
-            background: #4CAF50;
-            box-shadow: 0 0 8px #4CAF50;
-        }
-
-        #cameraButton {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 15px 30px;
+        #startBtn {
+            padding: 12px 25px;
             background: #4CAF50;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 6px;
+            font-size: 14px;
             cursor: pointer;
-            z-index: 101;
-            display: none;
+            margin-top: 10px;
         }
-
-        #cameraButton:hover {
-            background: #45a049;
-        }
-
+        #startBtn:hover { background: #45a049; }
+        
+        /* Tablet */
         @media (min-width: 768px) {
-            .gesture-info {
-                padding: 12px 15px;
-                font-size: 12px;
-                max-width: 50%;
-            }
-            .gesture-info h3 {
-                font-size: 15px;
-            }
-            .gesture-item {
-                font-size: 11px;
-            }
-            .instructions {
-                font-size: 13px;
-                padding: 12px 20px;
-            }
+            .ui { font-size: 12px; padding: 10px 15px; }
+            #info { max-width: 250px; }
+            #info h3 { font-size: 15px; margin-bottom: 8px; }
+            .gi { font-size: 12px; margin: 4px 0; }
+            #inst { font-size: 13px; padding: 12px 20px; }
+            .dot { width: 9px; height: 9px; }
         }
-
+        
+        /* Desktop */
         @media (min-width: 1024px) {
-            .container {
-                max-width: 1280px;
-                max-height: 720px;
-                margin: auto;
-                border-radius: 12px;
-                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            body { display: flex; align-items: center; justify-content: center; }
+            .container { 
+                max-width: 1280px; 
+                max-height: 720px; 
+                border-radius: 12px; 
+                box-shadow: 0 0 20px rgba(0,0,0,0.5); 
             }
-            body {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .gesture-info {
-                padding: 15px;
-                font-size: 13px;
-                top: 20px;
-                left: 20px;
-            }
-            .gesture-info h3 {
-                font-size: 16px;
-            }
-            .gesture-item {
-                font-size: 12px;
-                margin: 5px 0;
-                padding-left: 10px;
-            }
+            .ui { font-size: 13px; }
+            #info { top: 20px; left: 20px; padding: 15px; max-width: 300px; }
+            #info h3 { font-size: 16px; margin-bottom: 10px; }
+            .gi { font-size: 13px; margin: 5px 0; padding-left: 10px; }
+            #status { top: 20px; right: 20px; padding: 10px 15px; font-size: 12px; }
+            #inst { bottom: 20px; font-size: 14px; padding: 15px 25px; }
+            .dot { width: 10px; height: 10px; }
         }
     </style>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <div id="loadingMsg">Cargando casa 3D y IA...</div>
-        <button id="cameraButton">Permitir Cámara</button>
-
-        <div class="gesture-info">
+        <div id="loadingMsg">
+            <div>Cargando cubo 3D y IA...</div>
+            <button id="startBtn" style="display:none;">Iniciar Cámara</button>
+        </div>
+        
+        <div id="info" class="ui">
             <h3>🎮 Controles</h3>
-            <div class="gesture-item">🤏 <strong>Der:</strong> Rotar</div>
-            <div class="gesture-item">🤏 <strong>Izq:</strong> Mover</div>
-            <div class="gesture-item">🤏🤏 <strong>Ambas:</strong> Zoom</div>
-            <div class="gesture-item">✋🤏 <strong>D+I:</strong> Mover parte</div>
+            <div class="gi">🤏 <strong>Derecha</strong>: Rotar objeto</div>
+            <div class="gi">🤏 <strong>Izquierda</strong>: Trasladar</div>
+            <div class="gi">🤏🤏 <strong>Ambas</strong>: Escalar (zoom)</div>
+            <div class="gi">✋🤏 <strong>D. abierta + I. pinza</strong>: Mover cara</div>
         </div>
 
-        <div class="status-indicator">
-            <div class="hand-status">
-                <div id="leftDot" class="indicator-dot"></div>
-                <span id="leftStatus">Izq: --</span>
-            </div>
-            <div class="hand-status">
-                <div id="rightDot" class="indicator-dot"></div>
-                <span id="rightStatus">Der: --</span>
-            </div>
+        <div id="status" class="ui">
+            <div class="hs"><span class="dot" id="ld"></span><span id="lt">Izq: --</span></div>
+            <div class="hs"><span class="dot" id="rd"></span><span id="rt">Der: --</span></div>
         </div>
 
         <video id="input_video" playsinline></video>
         <canvas id="webgl_canvas"></canvas>
         <canvas id="hand_canvas"></canvas>
-
-        <div id="instructions" class="instructions">Usa tus manos para controlar la casa 3D</div>
+        
+        <div id="inst" class="ui">Esperando gestos...</div>
     </div>
 
     <script>
-        const videoElement = document.getElementById('input_video');
-        const loadingMsg = document.getElementById('loadingMsg');
-        const cameraButton = document.getElementById('cameraButton');
-        const webglCanvas = document.getElementById('webgl_canvas');
-        const handCanvas = document.getElementById('hand_canvas');
-        const handCanvasCtx = handCanvas.getContext('2d');
-        const instructionsDiv = document.getElementById('instructions');
-        const leftDot = document.getElementById('leftDot');
-        const rightDot = document.getElementById('rightDot');
-        const leftStatus = document.getElementById('leftStatus');
-        const rightStatus = document.getElementById('rightStatus');
+        const vid = document.getElementById('input_video');
+        const load = document.getElementById('loadingMsg');
+        const btn = document.getElementById('startBtn');
+        const wgl = document.getElementById('webgl_canvas');
+        const hnd = document.getElementById('hand_canvas');
+        const ctx = hnd.getContext('2d');
+        const inst = document.getElementById('inst');
+        const ld = document.getElementById('ld');
+        const rd = document.getElementById('rd');
+        const lt = document.getElementById('lt');
+        const rt = document.getElementById('rt');
 
-        let cameraStarted = false;
-        let renderer = null;
-
-        function resizeCanvas() {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            webglCanvas.width = width;
-            webglCanvas.height = height;
-            handCanvas.width = width;
-            handCanvas.height = height;
+        let started = false, renderer = null;
+        
+        function resize() {
+            const w = window.innerWidth, h = window.innerHeight;
+            wgl.width = w; wgl.height = h;
+            hnd.width = w; hnd.height = h;
             if (renderer) {
-                renderer.setSize(width, height);
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+                cam.aspect = w / h;
+                cam.updateProjectionMatrix();
             }
         }
+        window.addEventListener('resize', resize);
+        window.addEventListener('orientationchange', () => setTimeout(resize, 100));
 
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
-
-        let currentObject = null;
-        let scene = new THREE.Scene();
-        const INITIAL_SCALE = 2;
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer({ canvas: webglCanvas, alpha: true, antialias: true });
+        let obj = null;
+        const scene = new THREE.Scene();
+        const INITIAL_SCALE = 3;
+        const cam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({ canvas: wgl, alpha: true, antialias: true });
         renderer.setClearColor(0x000000, 0);
-
+        
         const light = new THREE.DirectionalLight(0xffffff, 2);
         light.position.set(5, 5, 5);
         scene.add(light);
         scene.add(new THREE.AmbientLight(0x404040));
-        camera.position.z = 5;
+        cam.position.z = 5;
+        resize();
 
-        resizeCanvas();
+        let ray = new THREE.Raycaster();
+        let ms = new THREE.Vector2();
+        let sel = null;
+        let initPos = new THREE.Vector3();
 
-        let raycaster = new THREE.Raycaster();
-        let mouse = new THREE.Vector2();
-        let selectedFace = null;
-        let initialFacePosition = new THREE.Vector3();
-
-        function loadHouse3D() {
-            if (currentObject) scene.remove(currentObject);
-            const group = new THREE.Group();
-            const wallMaterial = new THREE.MeshPhongMaterial({ color: 0xF5DEB3, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
-            const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
-            const doorMaterial = new THREE.MeshPhongMaterial({ color: 0x654321, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
-            const windowMaterial = new THREE.MeshPhongMaterial({ color: 0x87CEEB, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
-            const chimneyMaterial = new THREE.MeshPhongMaterial({ color: 0xA52A2A, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
-            const wallSize = 2, wallHeight = 1.5, roofHeight = 1;
-            const wallGeometry = new THREE.PlaneGeometry(wallSize, wallHeight);
+        function buildCube() {
+            if (obj) scene.remove(obj);
             
-            const frontWall = new THREE.Mesh(wallGeometry, wallMaterial.clone());
-            frontWall.position.set(0, 0, wallSize/2);
-            frontWall.userData.isFace = true;
-            frontWall.add(new THREE.LineSegments(new THREE.EdgesGeometry(frontWall.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-            group.add(frontWall);
+            load.style.display = 'block';
+            load.innerHTML = 'Construyendo cubo 3D...';
             
-            const backWall = new THREE.Mesh(wallGeometry, wallMaterial.clone());
-            backWall.position.set(0, 0, -wallSize/2);
-            backWall.rotation.y = Math.PI;
-            backWall.userData.isFace = true;
-            backWall.add(new THREE.LineSegments(new THREE.EdgesGeometry(backWall.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-            group.add(backWall);
+            const cubeSize = 1;
+            const halfSize = cubeSize / 2;
+            const baseMat = new THREE.MeshPhongMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
             
-            const leftWall = new THREE.Mesh(wallGeometry, wallMaterial.clone());
-            leftWall.position.set(-wallSize/2, 0, 0);
-            leftWall.rotation.y = -Math.PI/2;
-            leftWall.userData.isFace = true;
-            leftWall.add(new THREE.LineSegments(new THREE.EdgesGeometry(leftWall.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-            group.add(leftWall);
-            
-            const rightWall = new THREE.Mesh(wallGeometry, wallMaterial.clone());
-            rightWall.position.set(wallSize/2, 0, 0);
-            rightWall.rotation.y = Math.PI/2;
-            rightWall.userData.isFace = true;
-            rightWall.add(new THREE.LineSegments(new THREE.EdgesGeometry(rightWall.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-            group.add(rightWall);
-            
-            const roofGeometry = new THREE.PlaneGeometry(wallSize, roofHeight * 1.2);
-            const roofLeft = new THREE.Mesh(roofGeometry, roofMaterial.clone());
-            roofLeft.position.set(-wallSize/4, wallHeight/2 + roofHeight/3, 0);
-            roofLeft.rotation.z = Math.PI / 4;
-            roofLeft.userData.isFace = true;
-            roofLeft.add(new THREE.LineSegments(new THREE.EdgesGeometry(roofLeft.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-            group.add(roofLeft);
-            
-            const roofRight = new THREE.Mesh(roofGeometry, roofMaterial.clone());
-            roofRight.position.set(wallSize/4, wallHeight/2 + roofHeight/3, 0);
-            roofRight.rotation.z = -Math.PI / 4;
-            roofRight.userData.isFace = true;
-            roofRight.add(new THREE.LineSegments(new THREE.EdgesGeometry(roofRight.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-            group.add(roofRight);
-            
-            const doorGeometry = new THREE.PlaneGeometry(0.5, 0.8);
-            const door = new THREE.Mesh(doorGeometry, doorMaterial.clone());
-            door.position.set(0, -0.35, wallSize/2 + 0.01);
-            door.userData.isFace = true;
-            door.add(new THREE.LineSegments(new THREE.EdgesGeometry(door.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-            group.add(door);
-            
-            const windowGeometry = new THREE.PlaneGeometry(0.4, 0.4);
-            const windows = [
-                { pos: [-0.5, 0.2, wallSize/2 + 0.01], rot: [0, 0, 0] },
-                { pos: [0.5, 0.2, wallSize/2 + 0.01], rot: [0, 0, 0] },
-                { pos: [-wallSize/2 - 0.01, 0.2, 0], rot: [0, -Math.PI/2, 0] },
-                { pos: [wallSize/2 + 0.01, 0.2, 0], rot: [0, Math.PI/2, 0] }
+            const faceDefs = [
+                { pos: [halfSize, 0, 0], rot: [0, Math.PI / 2, 0], color: 0xFF0000 },
+                { pos: [-halfSize, 0, 0], rot: [0, -Math.PI / 2, 0], color: 0x00FF00 },
+                { pos: [0, halfSize, 0], rot: [-Math.PI / 2, 0, 0], color: 0x0000FF },
+                { pos: [0, -halfSize, 0], rot: [Math.PI / 2, 0, 0], color: 0xFFFF00 },
+                { pos: [0, 0, halfSize], rot: [0, 0, 0], color: 0xFF00FF },
+                { pos: [0, 0, -halfSize], rot: [0, Math.PI, 0], color: 0x00FFFF }
             ];
-            windows.forEach(w => {
-                const win = new THREE.Mesh(windowGeometry, windowMaterial.clone());
-                win.position.set(w.pos[0], w.pos[1], w.pos[2]);
-                win.rotation.set(w.rot[0], w.rot[1], w.rot[2]);
-                win.userData.isFace = true;
-                win.add(new THREE.LineSegments(new THREE.EdgesGeometry(win.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-                group.add(win);
+
+            const grp = new THREE.Group();
+            const planeGeo = new THREE.PlaneGeometry(cubeSize, cubeSize);
+
+            faceDefs.forEach(def => {
+                const mat = baseMat.clone();
+                mat.color.setHex(def.color);
+                const mesh = new THREE.Mesh(planeGeo, mat);
+                mesh.position.set(def.pos[0], def.pos[1], def.pos[2]);
+                mesh.rotation.set(def.rot[0], def.rot[1], def.rot[2]);
+                mesh.userData.f = true;
+                mesh.add(new THREE.LineSegments(
+                    new THREE.EdgesGeometry(mesh.geometry),
+                    new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 })
+                ));
+                grp.add(mesh);
             });
             
-            const chimneyGeometry = new THREE.BoxGeometry(0.3, 0.6, 0.3);
-            const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial.clone());
-            chimney.position.set(0.5, wallHeight/2 + roofHeight/2 + 0.1, 0.3);
-            chimney.userData.isFace = true;
-            chimney.add(new THREE.LineSegments(new THREE.EdgesGeometry(chimney.geometry), new THREE.LineBasicMaterial({ color: 0xffffff })));
-            group.add(chimney);
+            obj = grp;
+            obj.scale.set(INITIAL_SCALE, INITIAL_SCALE, INITIAL_SCALE);
+            obj.position.set(0, -0.5, 0);
+            obj.rotation.y = Math.PI;
+            scene.add(obj);
             
-            currentObject = group;
-            currentObject.scale.set(INITIAL_SCALE, INITIAL_SCALE, INITIAL_SCALE);
-            currentObject.position.set(0, -0.5, 0);
-            currentObject.rotation.y = Math.PI;
-            scene.add(currentObject);
+            load.style.display = 'none';
         }
+        buildCube();
 
-        loadHouse3D();
+        const MP = 5;
+        let rot=false, lrx=0, lry=0, lra=0, trx=0, try_=0, trz=0;
+        let trans=false, scal=false, lsd=null, mvf=false, lfx=0, lfy=0;
+        const RF=2.5, RZF=1.5, RS=0.15, PS=0.15, SS=15.0, FS=0.25;
 
-        const MEDIA_PIPE_SCALE = 5;
-        let isRotating = false, lastRotationX = 0, lastRotationY = 0, lastRotationAngle = 0;
-        let targetRotationX = 0, targetRotationY = 0, targetRotationZ = 0;
-        let isTranslating = false, isScaling = false, lastScaleDistance = null;
-        let isMovingFace = false, lastFacePinchX = 0, lastFacePinchY = 0;
-        const ROTATION_FACTOR = 2.5, ROTATION_Z_FACTOR = 1.5, ROTATION_SMOOTHING = 0.15;
-        const POSITION_SMOOTHING = 0.15, SCALE_SENSITIVITY = 15.0, FACE_MOVEMENT_SMOOTHING = 0.25;
+        function dist(x1,y1,x2,y2) { return Math.sqrt((x2-x1)**2+(y2-y1)**2); }
+        function ang(x1,y1,x2,y2) { return Math.atan2(y2-y1,x2-x1); }
+        function n3d(x,y) { return {x:x*MP-MP/2, y:-(y*MP-MP/2)}; }
+        function n2c(x,y) { return {x:(1-x)*wgl.width, y:y*wgl.height}; }
+        function c2n(x,y) { return new THREE.Vector2(x/wgl.width*2-1, -(y/wgl.height*2-1)); }
 
-        function calculateDistance(x1, y1, x2, y2) {
-            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-        }
-        function calculateAngle(x1, y1, x2, y2) {
-            return Math.atan2(y2 - y1, x2 - x1);
-        }
-        function normalizeTo3D(normalizedX, normalizedY) {
-            return { x: normalizedX * MEDIA_PIPE_SCALE - (MEDIA_PIPE_SCALE / 2), y: -(normalizedY * MEDIA_PIPE_SCALE - (MEDIA_PIPE_SCALE / 2)) };
-        }
-        function normalizedToCanvas(normalizedX, normalizedY) {
-            return { x: (1 - normalizedX) * webglCanvas.width, y: normalizedY * webglCanvas.height };
-        }
-        function canvasToNormalizedScreen(canvasX, canvasY) {
-            return new THREE.Vector2((canvasX / webglCanvas.width) * 2 - 1, -(canvasY / webglCanvas.height) * 2 + 1);
-        }
-
-        function handleRotationWithRightHand(indexTip, thumbTip) {
-            if (!currentObject) return;
-            const pinchX = (indexTip.x + thumbTip.x) / 2, pinchY = (indexTip.y + thumbTip.y) / 2;
-            if (!isRotating) {
-                isRotating = true;
-                lastRotationX = pinchX; lastRotationY = pinchY;
-                lastRotationAngle = calculateAngle(indexTip.x, indexTip.y, thumbTip.x, thumbTip.y) * -1;
-                targetRotationX = currentObject.rotation.x; targetRotationY = currentObject.rotation.y; targetRotationZ = currentObject.rotation.z;
+        function rotR(it,tt) {
+            if(!obj) return;
+            const px=(it.x+tt.x)/2, py=(it.y+tt.y)/2;
+            if(!rot) {
+                rot=true; lrx=px; lry=py; lra=ang(it.x,it.y,tt.x,tt.y)*-1;
+                trx=obj.rotation.x; try_=obj.rotation.y; trz=obj.rotation.z;
             } else {
-                const deltaX = pinchX - lastRotationX, deltaY = pinchY - lastRotationY;
-                const currentAngle = calculateAngle(indexTip.x, indexTip.y, thumbTip.x, thumbTip.y) * -1;
-                targetRotationY += deltaX * ROTATION_FACTOR; targetRotationX += deltaY * ROTATION_FACTOR;
-                let angleDelta = currentAngle - lastRotationAngle;
-                if (angleDelta > Math.PI) angleDelta -= 2 * Math.PI;
-                else if (angleDelta < -Math.PI) angleDelta += 2 * Math.PI;
-                targetRotationZ += angleDelta * ROTATION_Z_FACTOR * 0.3;
-                lastRotationX = pinchX; lastRotationY = pinchY; lastRotationAngle = currentAngle;
+                const dx=px-lrx, dy=py-lry, ca=ang(it.x,it.y,tt.x,tt.y)*-1;
+                try_+=dx*RF; trx+=dy*RF;
+                let ad=ca-lra;
+                if(ad>Math.PI) ad-=2*Math.PI;
+                else if(ad<-Math.PI) ad+=2*Math.PI;
+                trz+=ad*RZF*0.3;
+                lrx=px; lry=py; lra=ca;
             }
-            currentObject.rotation.x += (targetRotationX - currentObject.rotation.x) * ROTATION_SMOOTHING;
-            currentObject.rotation.y += (targetRotationY - currentObject.rotation.y) * ROTATION_SMOOTHING;
-            currentObject.rotation.z += (targetRotationZ - currentObject.rotation.z) * ROTATION_SMOOTHING;
+            obj.rotation.x+=(trx-obj.rotation.x)*RS;
+            obj.rotation.y+=(try_-obj.rotation.y)*RS;
+            obj.rotation.z+=(trz-obj.rotation.z)*RS;
         }
 
-        function handleTranslationWithLeftHand(indexTip, thumbTip) {
-            if (!currentObject) return;
-            const pinch3D = normalizeTo3D((indexTip.x + thumbTip.x) / 2, (indexTip.y + thumbTip.y) / 2);
-            currentObject.position.x += (pinch3D.x - currentObject.position.x) * POSITION_SMOOTHING;
-            currentObject.position.y += (pinch3D.y - currentObject.position.y) * POSITION_SMOOTHING;
+        function movL(it,tt) {
+            if(!obj) return;
+            const p3=n3d((it.x+tt.x)/2,(it.y+tt.y)/2);
+            obj.position.x+=(p3.x-obj.position.x)*PS;
+            obj.position.y+=(p3.y-obj.position.y)*PS;
         }
 
-        function handleScaleWithBothHands(leftPinch, rightPinch) {
-            if (!currentObject) return;
-            const distance = calculateDistance(leftPinch.x, leftPinch.y, rightPinch.x, rightPinch.y);
-            if (lastScaleDistance !== null) {
-                const deltaDistance = distance - lastScaleDistance;
-                let newScale = Math.max(0.5, Math.min(15, currentObject.scale.x + deltaDistance * SCALE_SENSITIVITY));
-                const smoothing = 0.3;
-                currentObject.scale.x += (newScale - currentObject.scale.x) * smoothing;
-                currentObject.scale.y += (newScale - currentObject.scale.y) * smoothing;
-                currentObject.scale.z += (newScale - currentObject.scale.z) * smoothing;
+        function zoom(lp,rp) {
+            if(!obj) return;
+            const d=dist(lp.x,lp.y,rp.x,rp.y);
+            if(lsd!==null) {
+                const dd=d-lsd;
+                let ns=Math.max(0.5,Math.min(15,obj.scale.x+dd*SS));
+                const sm=0.3;
+                obj.scale.x+=(ns-obj.scale.x)*sm;
+                obj.scale.y+=(ns-obj.scale.y)*sm;
+                obj.scale.z+=(ns-obj.scale.z)*sm;
             }
-            lastScaleDistance = distance;
+            lsd=d;
         }
 
-        function handleFaceMovementLeftPinch(indexTip, thumbTip, isPinching) {
-            if (!currentObject) return;
-            const pinchX = (indexTip.x + thumbTip.x) / 2, pinchY = (indexTip.y + thumbTip.y) / 2;
-            const pinch3D = normalizeTo3D(pinchX, pinchY);
-            if (isPinching && !selectedFace && !isMovingFace) {
-                const pinchCanvas = normalizedToCanvas(pinchX, pinchY);
-                mouse = canvasToNormalizedScreen(pinchCanvas.x, pinchCanvas.y);
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(currentObject.children.filter(obj => obj.userData.isFace), false);
-                if (intersects.length > 0) {
-                    selectedFace = intersects[0].object;
-                    selectedFace.material.emissive.setHex(0x555555);
-                    initialFacePosition.copy(selectedFace.position);
-                    lastFacePinchX = pinch3D.x; lastFacePinchY = pinch3D.y;
-                    isMovingFace = true;
+        function movF(it,tt,ip) {
+            if(!obj) return;
+            const px=(it.x+tt.x)/2, py=(it.y+tt.y)/2, p3=n3d(px,py);
+            if(ip&&!sel&&!mvf) {
+                const pc=n2c(px,py);
+                ms=c2n(pc.x,pc.y);
+                ray.setFromCamera(ms,cam);
+                const its=ray.intersectObjects(obj.children.filter(o=>o.userData.f),false);
+                if(its.length>0) {
+                    sel=its[0].object;
+                    sel.material.emissive.setHex(0x555555);
+                    initPos.copy(sel.position);
+                    lfx=p3.x; lfy=p3.y; mvf=true;
                 }
-            } else if (isPinching && selectedFace && isMovingFace) {
-                const deltaX = pinch3D.x - lastFacePinchX, deltaY = pinch3D.y - lastFacePinchY;
-                const worldMovement = new THREE.Vector3(deltaX, deltaY, 0);
-                const localMovement = worldMovement.clone();
-                localMovement.applyQuaternion(currentObject.quaternion.clone().invert());
-                selectedFace.position.x += localMovement.x * FACE_MOVEMENT_SMOOTHING;
-                selectedFace.position.y += localMovement.y * FACE_MOVEMENT_SMOOTHING;
-                selectedFace.position.z += localMovement.z * FACE_MOVEMENT_SMOOTHING;
-                lastFacePinchX = pinch3D.x; lastFacePinchY = pinch3D.y;
-            } else if (!isPinching && selectedFace) {
-                selectedFace.material.emissive.setHex(0x000000);
-                selectedFace = null; isMovingFace = false;
+            } else if(ip&&sel&&mvf) {
+                const dx=p3.x-lfx, dy=p3.y-lfy;
+                const wm=new THREE.Vector3(dx,dy,0), lm=wm.clone();
+                lm.applyQuaternion(obj.quaternion.clone().invert());
+                sel.position.x+=lm.x*FS;
+                sel.position.y+=lm.y*FS;
+                sel.position.z+=lm.z*FS;
+                lfx=p3.x; lfy=p3.y;
+            } else if(!ip&&sel) {
+                sel.material.emissive.setHex(0x000000);
+                sel=null; mvf=false;
             }
         }
 
-        function onResults(results) {
-            if (loadingMsg.style.display !== 'none' && currentObject) loadingMsg.style.display = 'none';
-            handCanvasCtx.save();
-            handCanvasCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
-            const handsData = [];
-            if (results.multiHandLandmarks && results.multiHandedness) {
-                for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-                    const landmarks = results.multiHandLandmarks[i];
-                    const handedness = results.multiHandedness[i].label;
-                    const indexTip = landmarks[8], thumbTip = landmarks[4];
-                    const middleTip = landmarks[12], ringTip = landmarks[16], pinkyTip = landmarks[20];
-                    const isPinching = calculateDistance(indexTip.x, indexTip.y, thumbTip.x, thumbTip.y) < 0.10;
-                    const indexMCP = landmarks[5], middleMCP = landmarks[9], ringMCP = landmarks[13], pinkyMCP = landmarks[17];
-                    const isOpen = calculateDistance(indexMCP.x, indexMCP.y, indexTip.x, indexTip.y) > 0.12 &&
-                                   calculateDistance(middleMCP.x, middleMCP.y, middleTip.x, middleTip.y) > 0.12 &&
-                                   calculateDistance(ringMCP.x, ringMCP.y, ringTip.x, ringTip.y) > 0.10 &&
-                                   calculateDistance(pinkyMCP.x, pinkyMCP.y, pinkyTip.x, pinkyTip.y) > 0.10 && !isPinching;
-                    handsData.push({ handedness, landmarks, indexTip, thumbTip, isPinching, isOpen, pinchX: (indexTip.x + thumbTip.x) / 2, pinchY: (indexTip.y + thumbTip.y) / 2 });
-                    drawConnectors(handCanvasCtx, landmarks, HAND_CONNECTIONS, { color: handedness === 'Right' ? '#00CC00' : '#0099FF', lineWidth: 2 });
-                    drawLandmarks(handCanvasCtx, landmarks, { color: isPinching ? '#FF0000' : '#FFFF00', lineWidth: 1 });
+        function onRes(res) {
+            if(load.style.display!=='none'&&obj) load.style.display='none';
+            ctx.save();
+            ctx.clearRect(0,0,hnd.width,hnd.height);
+            const hds=[];
+            if(res.multiHandLandmarks&&res.multiHandedness) {
+                for(let i=0;i<res.multiHandLandmarks.length;i++) {
+                    const lm=res.multiHandLandmarks[i], h=res.multiHandedness[i].label;
+                    const it=lm[8], tt=lm[4];
+                    const ip=dist(it.x,it.y,tt.x,tt.y)<0.10;
+                    const io=dist(lm[5].x,lm[5].y,it.x,it.y)>0.12&&dist(lm[9].x,lm[9].y,lm[12].x,lm[12].y)>0.12&&
+                            dist(lm[13].x,lm[13].y,lm[16].x,lm[16].y)>0.10&&dist(lm[17].x,lm[17].y,lm[20].x,lm[20].y)>0.10&&!ip;
+                    hds.push({h,lm,it,tt,ip,io,px:(it.x+tt.x)/2,py:(it.y+tt.y)/2});
+                    drawConnectors(ctx,lm,HAND_CONNECTIONS,{color:h==='Right'?'#00CC00':'#0099FF',lineWidth:2});
+                    drawLandmarks(ctx,lm,{color:ip?'#FF0000':'#FFFF00',lineWidth:1});
                 }
             }
-            const leftHand = handsData.find(h => h.handedness === 'Left');
-            const rightHand = handsData.find(h => h.handedness === 'Right');
-            if (leftHand) {
-                leftDot.classList.add('active');
-                leftStatus.textContent = leftHand.isPinching ? 'Izq: 🤏' : (leftHand.isOpen ? 'Izq: ✋' : 'Izq: 👊');
+            const lh=hds.find(h=>h.h==='Left'), rh=hds.find(h=>h.h==='Right');
+            if(lh) { ld.classList.add('active'); lt.textContent=lh.ip?'Izq: 🤏':(lh.io?'Izq: ✋':'Izq: 👊'); }
+            else { ld.classList.remove('active'); lt.textContent='Izq: --'; }
+            if(rh) { rd.classList.add('active'); rt.textContent=rh.ip?'Der: 🤏':(rh.io?'Der: ✋':'Der: 👊'); }
+            else { rd.classList.remove('active'); rt.textContent='Der: --'; }
+            
+            let act='Esperando gestos...';
+            if(rh&&rh.io&&lh&&lh.ip) {
+                movF(lh.it,lh.tt,true);
+                act='✋🤏 MODO MOVER CARA';
+                rot=false; trans=false; lsd=null;
+            } else if(lh&&rh&&lh.ip&&rh.ip) {
+                zoom({x:lh.px,y:lh.py},{x:rh.px,y:rh.py});
+                act='🤏🤏 ESCALANDO';
+                rot=false; trans=false;
+                if(sel){sel.material.emissive.setHex(0x000000);sel=null;mvf=false;}
+            } else if(rh&&rh.ip&&(!lh||!lh.ip)) {
+                rotR(rh.it,rh.tt);
+                act='🤏 ROTANDO';
+                trans=false; lsd=null;
+                if(sel){sel.material.emissive.setHex(0x000000);sel=null;mvf=false;}
+            } else if(lh&&lh.ip&&(!rh||!rh.ip)) {
+                movL(lh.it,lh.tt);
+                act='🤏 TRASLADANDO';
+                rot=false; lsd=null;
+                if(sel){sel.material.emissive.setHex(0x000000);sel=null;mvf=false;}
             } else {
-                leftDot.classList.remove('active');
-                leftStatus.textContent = 'Izq: --';
+                rot=false; trans=false; lsd=null;
+                if(sel){sel.material.emissive.setHex(0x000000);sel=null;mvf=false;}
             }
-            if (rightHand) {
-                rightDot.classList.add('active');
-                rightStatus.textContent = rightHand.isPinching ? 'Der: 🤏' : (rightHand.isOpen ? 'Der: ✋' : 'Der: 👊');
-            } else {
-                rightDot.classList.remove('active');
-                rightStatus.textContent = 'Der: --';
-            }
-            let currentAction = 'Esperando gestos...';
-            if (rightHand && rightHand.isOpen && leftHand && leftHand.isPinching) {
-                handleFaceMovementLeftPinch(leftHand.indexTip, leftHand.thumbTip, true);
-                currentAction = '✋🤏 MOVER PARTE';
-                isRotating = false; isTranslating = false; lastScaleDistance = null;
-            } else if (leftHand && rightHand && leftHand.isPinching && rightHand.isPinching) {
-                handleScaleWithBothHands({ x: leftHand.pinchX, y: leftHand.pinchY }, { x: rightHand.pinchX, y: rightHand.pinchY });
-                currentAction = '🤏🤏 ZOOM';
-                isRotating = false; isTranslating = false;
-                if (selectedFace) { selectedFace.material.emissive.setHex(0x000000); selectedFace = null; isMovingFace = false; }
-            } else if (rightHand && rightHand.isPinching && (!leftHand || !leftHand.isPinching)) {
-                handleRotationWithRightHand(rightHand.indexTip, rightHand.thumbTip);
-                currentAction = '🤏 ROTANDO';
-                isTranslating = false; lastScaleDistance = null;
-                if (selectedFace) { selectedFace.material.emissive.setHex(0x000000); selectedFace = null; isMovingFace = false; }
-            } else if (leftHand && leftHand.isPinching && (!rightHand || !rightHand.isPinching)) {
-                handleTranslationWithLeftHand(leftHand.indexTip, leftHand.thumbTip);
-                currentAction = '🤏 TRASLADANDO';
-                isRotating = false; lastScaleDistance = null;
-                if (selectedFace) { selectedFace.material.emissive.setHex(0x000000); selectedFace = null; isMovingFace = false; }
-            } else {
-                isRotating = false; isTranslating = false; lastScaleDistance = null;
-                if (selectedFace) { selectedFace.material.emissive.setHex(0x000000); selectedFace = null; isMovingFace = false; }
-            }
-            instructionsDiv.innerHTML = currentAction;
-            if (currentObject) renderer.render(scene, camera);
-            handCanvasCtx.restore();
+            inst.innerHTML=act;
+            if(obj) renderer.render(scene,cam);
+            ctx.restore();
         }
 
-        const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
-        hands.onResults(onResults);
+        const hnds=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+        hnds.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.7,minTrackingConfidence:0.7});
+        hnds.onResults(onRes);
 
-        async function startCamera() {
+        async function start() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'user',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                const strm=await navigator.mediaDevices.getUserMedia({
+                    video:{
+                        facingMode:'user',
+                        width:{ideal: isMobile ? 640 : 1280},
+                        height:{ideal: isMobile ? 480 : 720}
                     }
                 });
-                videoElement.srcObject = stream;
-                videoElement.addEventListener('loadeddata', () => {
-                    const cameraFeed = new Camera(videoElement, {
-                        onFrame: async () => {
-                            await hands.send({ image: videoElement });
-                        },
-                        width: 1280,
-                        height: 720
-                    });
-                    cameraFeed.start();
-                    cameraStarted = true;
-                    loadingMsg.textContent = 'Cargando modelo de IA...';
-                    setTimeout(() => {
-                        if (currentObject) loadingMsg.style.display = 'none';
-                    }, 2000);
+                vid.srcObject=strm;
+                await vid.play();
+                const cf=new Camera(vid,{
+                    onFrame:async()=>{await hnds.send({image:vid});},
+                    width: isMobile ? 640 : 1280,
+                    height: isMobile ? 480 : 720
                 });
-            } catch (error) {
-                console.error('Error al acceder a la cámara:', error);
-                loadingMsg.innerHTML = '❌ Error al acceder a la cámara.<br>Por favor permite el acceso en la configuración del navegador.';
-                cameraButton.style.display = 'block';
-                cameraButton.textContent = 'Reintentar Cámara';
+                cf.start();
+                started=true;
+                load.textContent='Iniciando IA...';
+                setTimeout(()=>{if(obj)load.style.display='none';},1500);
+            } catch(e) {
+                console.error(e);
+                load.innerHTML='❌ Error de cámara<br><small>Permite acceso en configuración</small>';
+                btn.textContent='Reintentar';
+                btn.style.display='block';
             }
         }
 
-        cameraButton.addEventListener('click', () => {
-            cameraButton.style.display = 'none';
-            loadingMsg.textContent = 'Accediendo a la cámara...';
-            loadingMsg.style.display = 'block';
-            startCamera();
-        });
+        btn.onclick=()=>{
+            btn.style.display='none';
+            load.innerHTML='Accediendo a cámara...';
+            start();
+        };
 
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            startCamera();
+        if(navigator.mediaDevices) {
+            start().catch(()=> setTimeout(()=>{if(!started) btn.style.display='block';},500));
         } else {
-            loadingMsg.innerHTML = '❌ Tu navegador no soporta acceso a la cámara.';
-            cameraButton.style.display = 'block';
-            cameraButton.textContent = 'Navegador no compatible';
-            cameraButton.disabled = true;
+            load.innerHTML='❌ Navegador no compatible';
         }
     </script>
 </body>
